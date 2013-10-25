@@ -1,6 +1,8 @@
 alarm-notification
 ==================
 
+License
+==================
 Copyright 2013 Adam Markham
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,5 +17,6 @@ Copyright 2013 Adam Markham
    See the License for the specific language governing permissions and
    limitations under the License.
 
-
+Description
+==================
 Creates notification to launch alarm clock from status bar. 

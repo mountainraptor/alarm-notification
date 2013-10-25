@@ -28,7 +28,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -53,7 +53,10 @@ public class AlarmService extends Service {
 	SharedPreferences.OnSharedPreferenceChangeListener listener;
 	SharedPreferences.Editor editor;
 	
-	String nextAlarmString;
+	@Override
+	public IBinder onBind(Intent intent) {
+		return null;
+	}
 	
 	Handler handler = new Handler();
 	
@@ -80,7 +83,7 @@ public class AlarmService extends Service {
         				handler.postDelayed(r, 1);
         			} else {
         				Log.d(TAG,"Screen is Off!");
-        				clearNotification(mId);
+        				clearNotification(867);
         				handler.removeCallbacks(r);
         			}
         		}
@@ -91,32 +94,18 @@ public class AlarmService extends Service {
 	}
 
 	@Override
-	public void onStart(Intent intent, int startid) {
-		Log.d(TAG, "onStart");
-		
-		Random random = new Random();
-		mId = random.nextInt();
-		
-		ComponentName component=new ComponentName(AlarmService.this, OnBootReceiver.class);
-		getPackageManager().setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-		handler.postDelayed(r, 1000);
-	}
-	
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
-	}
-	
-	@Override
 	public void onDestroy() {
 		Log.d(TAG, "onDestroy");
 		
 		unregisterReceiver(mReceiver);
-		clearNotification(mId);
+		clearNotification(867);
 		handler.removeCallbacks(r);
-		
-		ComponentName component=new ComponentName(AlarmService.this, OnBootReceiver.class);
-		getPackageManager().setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+	}
+	
+	@Override
+	public void onStart(Intent intent, int startid) {
+		Log.d(TAG, "onStart");
+		handler.postDelayed(r, 1000);
 	}
 	
 	private Intent getClockIntent() {
@@ -172,17 +161,12 @@ public class AlarmService extends Service {
 	
 	private void postNotification() {
 		Log.d(TAG, "posting notification");
-		
 		mBuilder =
 		        new NotificationCompat.Builder(this)
 				.setSmallIcon(R.drawable.transparent)
 				//.setLargeIcon(BitmapFactory.decodeResource(getApplicationContext().getResources(),R.drawable.alarm_white))
 		        .setContentTitle(getResources().getString(R.string.notification_title))
-		        .setContentText("Next Alarm is " + Settings.System.getString(getContentResolver(), Settings.System.NEXT_ALARM_FORMATTED).toString())
-		        .setPriority(NotificationCompat.PRIORITY_MIN)
-		        .setOngoing(true);
-		
-		nextAlarmString = Settings.System.getString(getContentResolver(), Settings.System.NEXT_ALARM_FORMATTED).toString();
+		        .setContentText("Next Alarm is " + Settings.System.getString(getContentResolver(), Settings.System.NEXT_ALARM_FORMATTED).toString());
 		
 		notificationPosted = true;
 		Intent nIntent = getClockIntent();
@@ -194,8 +178,9 @@ public class AlarmService extends Service {
 		PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 		mBuilder.setContentIntent(resultPendingIntent);
 		
+		// should make mId random
+		mId = 867;
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		
 		// mId allows you to update the notification later on.
 		mNotificationManager.notify(mId, mBuilder.build());
 	}
@@ -204,7 +189,7 @@ public class AlarmService extends Service {
 		Log.d(TAG,"Clearing Notification");
 		notificationPosted = false;
 		
-		try {
+		try{
 			mNotificationManager.cancel(id);
 		} catch (NullPointerException e) {
 			Log.d(TAG,e + "");
@@ -216,14 +201,12 @@ public class AlarmService extends Service {
 	    	Log.d(TAG,"Runnable");
 	    	if(isAlarmActive()) {
 	    		Log.d(TAG,"Alarm Active");
-	    		if(!notificationPosted || !nextAlarmString.equals(Settings.System.getString(getContentResolver(), Settings.System.NEXT_ALARM_FORMATTED).toString())) {
+	    		if(!notificationPosted) {
 	    			Log.d(TAG,"Runnable Posting Notification");
-	    			clearNotification(mId);
 	    			postNotification();
 	    		}
 	    	} else {
-	    		Log.d(TAG,"Clearing Notification from Runnable");
-	    		clearNotification(mId);
+	    		clearNotification(867);
 	    	}
 	        handler.postDelayed(this, 5000);
 	    }
